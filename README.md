@@ -64,7 +64,7 @@ the red line represents the initialized hidden layer
     FRONT-CNN: resnet-18
     LOSS-WEIGHTS: 0.7(CTC) + 0.3(Accent) --> 0.4(CTC) + 0.6(Accent) [finetune]
     BPE: 1000 subwords
-    EPOCHS: 10
+    EPOCHS: 8
     CTC-WER(dev): 29%
     Accent-ACC(dev): 72%
  
