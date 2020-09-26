@@ -1,6 +1,6 @@
 
 ## AR-Net: Accent Recognition Network (Keras)
-For Interspeech2020 Accented English Speech Recognition Challenges 
+For Interspeech2020 Accented English Speech Recognition Challenges (AESRC)
 
 ##### Author: Ephemeroptera
 ##### Blog: https://blog.csdn.net/Ephemeroptera/article/details/108680076
