@@ -104,6 +104,7 @@ def feat_reshape(feat,max_len=1200):
     # return (feat-m)/(s+eps)
 
 def feat_norm(feat):
+    # cmn
     m = np.expand_dims(M,axis=0)
     return feat-m
 
@@ -328,10 +329,14 @@ def ctc_eval(labels, label_lens, preds, show=None):
     return "%.3f"%(fz/fm)
 
 
-def acc(ref,hyp):
-    ref = np.argmax(ref,axis=1)
-    hyp = np.argmax(hyp,axis=1)
-    return sum(ref==hyp)/len(ref)
+def acc(ref,hyp,accent=-1):
+    ref = np.argmax(ref, axis=1)
+    hyp = np.argmax(hyp, axis=1)
+    if accent>-1:
+        ids = np.where(ref==accent)[0]
+        return sum(ref[ids] == hyp[ids])/len(ids)
+    else:
+        return sum(ref==hyp)/len(ref)
 
 """
 ================= 
