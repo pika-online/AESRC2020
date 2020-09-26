@@ -41,7 +41,7 @@ Librispeech data consists of 960 hours of training data and 40 hours of test dat
 ![avatar](https://img-blog.csdnimg.cn/20200925230950457.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
 
 ###### 4.2 Training CTC-Accent Model
-![avatar](https://img-blog.csdnimg.cn/20200926214558388.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
+![avatar](https://img-blog.csdnimg.cn/20200926215242738.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
 
 the red line represents the initialized hidden layer 
 
