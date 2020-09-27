@@ -50,9 +50,9 @@ def model_ctc(shapes,
     # shared-layer
     cnn1 = resnet18_(shapes)
     # cnn1 = resnet34_(shapes)
-    # cnn1 = resnet52_(shapes)
+    # cnn1 = resnet50_(shapes)
     # cnn1 = resnet101_(shapes)
-    # cnn1 = resnet152_()_(shapes)
+    # cnn1 = resnet152_(shapes)
     encoder_len = int(cnn1.output.shape[1] * cnn1.output.shape[2])
     print("==== the model encoder length is: %d ====" % encoder_len)
     print("==== Warnning: you should let max_label_len <= encoder_len ====")
@@ -121,9 +121,9 @@ def model_ctc_accent(shapes,
     # shared-layer
     cnn1 = resnet18_(shapes)
     # cnn1 = resnet34_(shapes)
-    # cnn1 = resnet52_(shapes)
+    # cnn1 = resnet50_(shapes)
     # cnn1 = resnet101_(shapes)
-    # cnn1 = resnet152_()_(shapes)
+    # cnn1 = resnet152_(shapes)
     encoder_len = int(cnn1.output.shape[1]*cnn1.output.shape[2])
     print("==== the model encoder length is: %d ===="%encoder_len)
     print("==== Warnning: you should let max_label_len <= encoder_len ====")
