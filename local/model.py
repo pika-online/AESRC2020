@@ -37,7 +37,6 @@ def model_ctc(shapes,
             <shape>: the shape of input tensor
             <bpe_classes>: the size of bpe set
             <max_label_len>: maximum labels length (for ctc)
-            <encoder_len>: encoder_length (for ctc)
             <raw_model>: init weights
         Return:
             <model>: ctc models
@@ -108,7 +107,6 @@ def model_ctc_accent(shapes,
         <bpe_classes>: the size of bpe set
         <accent_classes>: the size of accents
         <max_label_len>: maximum labels length (for ctc)
-        <encoder_len>: encoder_length (for ctc)
         <raw_model>: init weights
     Return:
         <model>: ctc-accents multi-task-learning models
@@ -174,7 +172,7 @@ def model_ctc_accent(shapes,
 
 """
 =========================
-       combile models
+       compile models
 =========================
 """
 def compile(model,
