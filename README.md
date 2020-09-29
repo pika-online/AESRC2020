@@ -50,9 +50,9 @@ Librispeech data consists of 960 hours of training data and 40 hours of test dat
 
 ###### 4.1 training/network config
 
-|  GPUS|BATCH_SIZE  |EPOCHS| INIT_LR |BPE_SIZE | 
-|----|----|----|----|----|----|
-|  3| 300 |20|0.001|1000|
+| GPUS|BATCH_SIZE  |EPOCHS| INIT_LR |BPE_SIZE | 
+|----|----|----|----|----|
+|  3| 150 |20|0.001|1000|
 
 
 | MAX_SEQ_LEN (libri) | MAX_LABEL_LEN (libri) | ENCODER_LEN (libri) |
