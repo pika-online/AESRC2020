@@ -17,9 +17,9 @@ We tried the following models
 ###### 2.1 ARNet-A : CNN + RNN framework 
 ![avatar](https://img-blog.csdnimg.cn/20200928194607729.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
 ###### 2.2 ARNet-B : CNN + Attention framework
-![avatar](https://img-blog.csdnimg.cn/20200928213059726.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
+![avatar](https://img-blog.csdnimg.cn/20200929152355534.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
 ###### 2.3 ARNet-C : CNN + Transformer framework
-![avatar](https://img-blog.csdnimg.cn/20200928213123878.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)    
+![avatar](https://img-blog.csdnimg.cn/20200929152526757.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)    
 
 The above model can be summarized as follow:
     
@@ -50,9 +50,9 @@ Librispeech data consists of 960 hours of training data and 40 hours of test dat
 
 ###### 4.1 training/network config
 
-|  GPUS|BATCH_SIZE  |EPOCHS| INIT_LR |BPE_SIZE | CNN |
+|  GPUS|BATCH_SIZE  |EPOCHS| INIT_LR |BPE_SIZE | 
 |----|----|----|----|----|----|
-|  3| 300 |30|0.001|1000|resnet-18|
+|  3| 300 |20|0.001|1000|
 
 
 | MAX_SEQ_LEN (libri) | MAX_LABEL_LEN (libri) | ENCODER_LEN (libri) |
@@ -76,44 +76,43 @@ Multi-task Loss weight setting:
 |   | Loss(ctc) : Loss(accent)|
 |----|----|
 |  ARNet-A| 0.7 : 0.3 |
-|  ARNet-B| 0.5 : 0.5|
-|  ARNet-C| 0.5 : 0.5|
+|  ARNet-B| 0.7 : 0.3|
+|  ARNet-C| 0.7 : 0.3|
 
 
 ##### 5. Results
-###### 5.1 Pre-training
-    Corpus: Librispeech
-    INPUT_SIZE: 1600x80
-    ENCODER_LEN: 150
-    MAX_CTC_LABEL_LEN: 100
-    FRONT-CNN: resnet-18
-    BPE: 1000 subwords
-    EPOCHS: 10
-    CTC-WER(dev_clean): 25%
+###### 5.1 librispeech
+CTC WER:
 
-###### 5.2 AR-Net
-    Corpus: AESRC
-    INPUT_SIZE: 1200x80
-    ENCODER_LEN: 114
-    MAX_CTC_LABEL_LEN: 72
-    FRONT-CNN: resnet-18
-    LOSS-WEIGHTS: 0.7(CTC) + 0.3(Accent) --> 0.4(CTC) + 0.6(Accent) [finetune]
-    BPE: 1000 subwords
-    EPOCHS: 10
-    CTC-WER(dev): 29%
-    Accent-ACC(dev): 72%
- 
- Accent Acc:
- 
-|  Chinese|Japanese  |India| Korea | American | Britain | Portuguese| Russia| Overall
-|----|----|----|----|----|----|----|----|----|
-|  0.56| 0.70 |0.96|0.67|0.49|0.88|0.79|0.71|0.72
+|  |dev_clean  |dev_other| test_clean|test_other |
+|----|----|----|----|----|
+|  ARNet-A| 25% |-|-|-|
+|  ARNet-B| - |-|-|-|
+|  ARNet-C| - |-|-|-|
 
-![avatar](https://img-blog.csdnimg.cn/20200926203352622.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
+
+###### 5.2 aesrc
+CTC WER:
+
+|  |dev  |test| 
+|----|----|----|
+|  ARNet-A| 29% |-|
+|  ARNet-B| - |-|
+|  ARNet-C| - |-|
+ 
+Accent Acc:
+ 
+||  Chinese|Japanese  |India| Korea | American | Britain | Portuguese| Russia| Overall
+|----|----|----|----|----|----|----|----|----|----|
+| ARNet-A|  0.56| 0.70 |0.96|0.67|0.49|0.88|0.79|0.71|0.72
+| ARNet-B|  |||||
+| ARNet-C|  
 
 
 ###### 5.3 Official Baseline
 Officials have also provided a good baseline: https://github.com/R1ckShi/AESRC2020, That method is based on ESPNET, and the model consists of Transformer and ASR-init.
+
+Dev accent acc:
 
 |  Chinese|Japanese  |India| Korea | American | Britain | Portuguese| Russia| Overall
 |----|----|----|----|----|----|----|----|----|
