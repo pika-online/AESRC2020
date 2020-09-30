@@ -1,9 +1,13 @@
-from keras.layers import Input, Conv2D, BatchNormalization, \
-    MaxPooling2D, Flatten,AveragePooling2D,Activation,Add
+from keras.layers import Input, Conv2D, BatchNormalization,MaxPooling2D, Flatten,AveragePooling2D,Activation,Add
 from keras.models import Model
 from keras import backend as K
 from keras.regularizers import l2
 import six
+
+"""
+Reference: https://github.com/raghakot/keras-resnet/blob/master/resnet.py
+"""
+
 
 ROW_AXIS = 1
 COL_AXIS = 2
@@ -11,7 +15,7 @@ CHANNEL_AXIS = 3
 
 """
 ================================== 
-       (1) resnet constructor 
+        resnet constructors 
 ==================================
 """
 
@@ -159,7 +163,7 @@ def _get_block(identifier):
 
 """
 ================================== 
-       (2) resnet nnet 
+        resnet models 
 ==================================
 """
 
