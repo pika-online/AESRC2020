@@ -62,7 +62,7 @@ EPOCHS| INIT_LR |BPE_SIZE |
 Training_tricks: ReduceLROnPlateau, EarlyStopping
 
 ###### 4.2 pre-training : Initialize the hidden layer (librispeech)
-Take model ARNet-A as example: the red outline represents the initialized weights by librispeech-ctc-training
+ The red outline represents the initialized weights by librispeech-ctc-training
 ![avatar](https://img-blog.csdnimg.cn/20200930124919696.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_cente)
 
 ###### 4.3 training ARNet
