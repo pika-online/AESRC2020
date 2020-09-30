@@ -70,23 +70,20 @@ Training_tricks: ReduceLROnPlateau, EarlyStopping
 
 ##### 5. Results
 ###### 5.1 librispeech
-CTC WER:
+CTC WER (no lm):
 
 |  |dev_clean | dev_other | test_clean | test_other |
 |----|----|----|----|----|
 | resnet18 + bi-gru| 25% |-|-|-|
-| resnet34 + bi-gru|  16.5%  |32.8% | 17.0% | 33.3%|
-|  resnet50 + bi-gru| - |-|-|-|
 
 
 ###### 5.2 aesrc
-CTC WER:
+CTC WER (no lm):
 
 |  |dev  | test| 
 |----|----|----|
 |  resnet18 + bi-gru| 29% |-|-|-|
-| resnet34 + bi-gru| - |-|-|-|
-|  resnet50 + bi-gru| - |-|-|-|
+
 
  
 Accent Acc (dev):
@@ -94,8 +91,7 @@ Accent Acc (dev):
 | |  Chinese|Japanese  |India| Korea | American | Britain | Portuguese| Russia| Overall
 |----|----|----|----|----|----|----|----|----|----|
 | resnet18 + bi-gru|  0.56| 0.70 |0.96|0.67|0.49|0.88|0.79|0.71|**0.72**
-| resnet34 + bi-gru|  |||||
-| resnet50 + bi-gru|  
+
 
 
 ###### 5.3 Official Baseline
