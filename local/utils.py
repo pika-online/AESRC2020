@@ -8,12 +8,14 @@ from keras.utils.np_utils import to_categorical
 import random
 
 """
-=========== 
-    BASE 
+================= 
+      BASE 
 =================
 """
 MMS = MinMaxScaler()
-SYB = ['-','.','~','\'']
+PUNC = ['-', '.', '~', '\'']
+UNK_ID = 0
+SOS_ID = 1
 EOS_ID = 2
 BPE_EN = BPEmb(lang="en", vs=1000)
 
@@ -38,7 +40,6 @@ def read_lines(path):
     lst = [line.strip() for line in f.readlines()]
     f.close()
     return lst
-
 
 def merge_dct(dict1, dict2):
     res = {**dict1, **dict2}
@@ -121,7 +122,7 @@ def filt_en_word(word):
 def filt_text(text):
     text_ = []
     for word in text.split():
-        if word in SYB:continue
+        if word in PUNC:continue
         text_.append(filt_en_word(word))
     return " ".join(text_)
 
@@ -150,6 +151,15 @@ def text_ids_norm(ids,max_len):
     tmp[:n] = ids
     return tmp
 
+def text_ids_norm2(ids,max_len):
+    n = min(len(ids), max_len)
+    ids = ids if len(ids) <= max_len else ids[:max_len]
+    ids = ids[:-1]
+    tmp = [EOS_ID] * max_len
+    tmp[0] = SOS_ID
+    tmp[1:n] = ids
+    return tmp
+
 def text_dct_ids(func,dct):
     for utt in dct:
         dct[utt] = bpe_encoding_ids(func,dct[utt])
@@ -164,8 +174,6 @@ def text_dct_ids_with_eos(func,dct,max_len=None):
         else:
             dct[utt] = ans
     return dct
-
-
 
 
 """
@@ -209,6 +217,7 @@ def load_ctc_accent(lst, feats,
             "accent_labels": np.asarray(accent_labels)}
 
 
+# For CTC and Accent
 def generator_ctc_accent(lst, feats, batch_size,
                          max_label_len,
                          max_input_len,
@@ -236,7 +245,7 @@ def generator_ctc_accent(lst, feats, batch_size,
             yield data, labels
 
 
-
+# For CTC
 def load_ctc(lst, feats,
             max_label_len,
             max_input_len,
@@ -284,6 +293,53 @@ def generator_ctc(lst, feats, batch_size,
             yield data, labels
 
 
+
+# For transformer
+def load_tfr(lst, feats,
+            max_label_len,
+            max_input_len,
+            bpe_classes,
+            trans_ids):
+    encoder_inputs = []
+    decoder_inputs = []
+    outputs = []
+    for utt in lst:
+        utt = utt_norm(utt)
+        label = trans_ids[utt]
+        label_norm = text_ids_norm(label, max_label_len)
+        label_norm2 = text_ids_norm2(label, max_label_len)
+        label_norm_oh = to_categorical(label_norm,bpe_classes)
+        encoder_inputs.append(feat_reshape(feat_norm(feats[utt]),max_input_len))
+        decoder_inputs.append(label_norm2)
+        outputs.append(label_norm_oh)
+    return {"encoder_input": np.float32(np.asarray(encoder_inputs)),
+            "decoder_input": np.float32(np.asarray(decoder_inputs))}, \
+           {"output": np.float32(np.asarray(outputs))}
+
+
+def generator_tfr(lst, feats, batch_size,
+                  max_label_len,
+                  max_input_len,
+                  bpe_classes,
+                  trans_ids
+                  ):
+    n_batchs = len(lst) // batch_size
+    while True:
+        random.shuffle(lst)
+        for i in range(n_batchs):
+            begin = i * batch_size
+            end = begin + batch_size
+            subs = lst[begin:end]
+            data, labels = load_tfr(subs, feats,
+                                    max_label_len,
+                                    max_input_len,
+                                    bpe_classes,
+                                    trans_ids)
+            yield data, labels
+
+
+
+# pred
 def feats2inputs(feats,max_input_len):
     utts = []
     arr = []
@@ -313,7 +369,7 @@ def edit_distance(word1, word2):
     return dp[len1][len2]
 
 def ctc_eval(labels, label_lens, preds, show=None):
-    fz,fm = 0,0
+    wer_,count = 0,0
     for label,length,pred in zip(labels,label_lens,preds):
         label = [int(item) for item in label]
         length = int(length[0])
@@ -321,13 +377,28 @@ def ctc_eval(labels, label_lens, preds, show=None):
         pred = [int(item) for item in pred if item != -1]
         true_ = BPE_EN.decode_ids(true)
         pred_ = BPE_EN.decode_ids(pred) if pred else ""
-        fz += edit_distance(true_.split(),pred_.split())
-        fm += len(true_.split())
+        wer = edit_distance(true_.split(),pred_.split())/len(true_.split())
+        wer_ += wer
+        count += 1
     if show:
         print("DEMO-REF", true, true_)
         print("DEMO-HYP", pred, pred_)
-    return "%.3f"%(fz/fm)
+    return wer_/count
 
+def softmax2res(ref,hyp,show=True):
+    refs = np.argmax(ref, axis=2)
+    hyps = np.argmax(hyp, axis=2)
+    wer_,count = 0,0
+    for ref,hyp in zip(refs,hyps):
+        ref_ = BPE_EN.decode_ids(ref).split()
+        hyp_ = BPE_EN.decode_ids(hyp).split()
+        wer = edit_distance(ref_,hyp_)/len(ref_)
+        wer_ += wer
+        count += 1
+    if show:
+        print("DEMO-REF", ref, ref_)
+        print("DEMO-HYP", hyp, hyp_)
+    return wer_/count
 
 def acc(ref,hyp,accent=-1):
     ref = np.argmax(ref, axis=1)
@@ -344,16 +415,16 @@ def acc(ref,hyp,accent=-1):
 =================
 """
 # print("------------ loading predefination ---------------------")
-# AESRC_NATION = scp2dct(read_lines("src/AESRC2020/NATION.TXT"))
-# AESRC_NATION2INT = {"Chinese":0, "Japanese":1, "Indian":2, "Korean":3, "American":4, "British":5, "Portuguese":6, "Russian":7}
+# AESRC_ACCENT = scp2dct(read_lines("src/AESRC2020/NATION.TXT"))
+# AESRC_ACCENT2INT = {"Chinese":0, "Japanese":1, "Indian":2, "Korean":3, "American":4, "British":5, "Portuguese":6, "Russian":7}
 # AESRC_TRANS = filt_text_dct(scp2dct(read_lines("/disc1/AESRC2020/data/aesrc_fbank/trans.scp")))
 # AESRC_TRANS_IDS = text_dct_ids_with_eos(BPE_EN, AESRC_TRANS)
 # AESRC_UTT2FRAMES = scp2dct(read_lines("/disc1/AESRC2020/data/aesrc_fbank_sp/utt2num_frames"))
 # LIBRI_TRANS = filt_text_dct(scp2dct(read_lines("/disc1/AESRC2020/data/librispeech_train/trans.scp")))
 # LIBRI_TRANS_IDS = text_dct_ids_with_eos(BPE_EN, LIBRI_TRANS)
 # LIBRI_UTT2FRAMES = scp2dct(read_lines("/disc1/AESRC2020/data/librispeech_train/utt2num_frames"))
-# save('data/dict/aesrc_nation.pkl',AESRC_NATION)
-# save('data/dict/aesrc_nation_int.pkl',AESRC_NATION2INT)
+# save('data/dict/aesrc_nation.pkl', AESRC_ACCENT)
+# save('data/dict/aesrc_nation_int.pkl', AESRC_ACCENT2INT)
 # save('data/dict/aesrc_trans_ids.pkl',AESRC_TRANS_IDS)
 # save('data/dict/aesrc_utt2frames.pkl',AESRC_UTT2FRAMES)
 # save('data/dict/libri_trans_ids.pkl',LIBRI_TRANS_IDS)
@@ -387,6 +458,7 @@ if __name__ == "__main__":
                                      trans_ids=AESRC_TRANS_IDS,
                                      accent_dct=AESRC_ACCENT,
                                      accent_ids=AESRC_ACCENT2INT)
+
     data = next(generator)
 
     exit()
