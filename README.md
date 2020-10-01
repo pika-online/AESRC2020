@@ -45,9 +45,9 @@ Librispeech data consists of 960 hours of training data and 40 hours of test dat
 
 ###### 4.1 training/network config
 
-EPOCHS| INIT_LR |BPE_SIZE | 
-|----|----|----|
-20|0.001|1000|
+EPOCHS| INIT_LR |BATCH_SIZE | BPE_SIZE |
+|----|----|----|----|
+20|0.001|96|1000|
 
 
 | MAX_SEQ_LEN (libri) | MAX_LABEL_LEN (libri) | ENCODER_LEN (libri) |
@@ -74,7 +74,11 @@ CTC WER (no lm):
 
 |  |dev_clean | dev_other | test_clean | test_other |
 |----|----|----|----|----|
-| resnet18 + bi-gru| 25% |-|-|-|
+| resnet18 + bi-gru| 20.7% |37.5%|20.9%|38.6%|
+
+**Experiments have shown that using a deeper resnet can further reduce word error rates,
+such as: resnet34 brought 16.7% wer in dev_clean**
+
 
 
 ###### 5.2 aesrc
