@@ -187,64 +187,6 @@ def limit_trans_utts(lst,trans_dct,max_len=64):
 def limit_time_utts(lst, utt2frames, max_len=64):
     return [utt for utt in lst if int(utt2frames[utt]) <= max_len]
 
-def load_ctc_accent(lst, feats,
-                    max_label_len,
-                    max_input_len,
-                    encoder_len,
-                    accent_classes,
-                    trans_ids,
-                    accent_dct,
-                    accent_ids, ):
-    inputs1 = []
-    ctc_input_len = []
-    ctc_label_len = []
-    ctc_labels = []
-    accent_labels = []
-    for utt in lst:
-        utt = utt_norm(utt)
-        ctc_label = trans_ids[utt]
-        ctc_label_norm = text_ids_norm(ctc_label, max_label_len)
-        inputs1.append(feat_reshape(feat_norm(feats[utt]),max_input_len))
-        ctc_input_len.append(encoder_len)
-        ctc_label_len.append(min(len(ctc_label)-1,max_label_len) )
-        ctc_labels.append(ctc_label_norm)
-        accent_labels.append(to_categorical(accent_ids[accent_dct[utt]], num_classes=accent_classes))
-    return {"inputs": np.float32(np.expand_dims(np.asarray(inputs1), axis=3)),
-            "ctc_input_len": np.int32(np.expand_dims(np.asarray(ctc_input_len), axis=1)),
-            "ctc_label_len": np.int32(np.expand_dims(np.asarray(ctc_label_len), axis=1)),
-            "ctc_labels": np.float32(np.asarray(ctc_labels))}, \
-           {"ctc_loss": np.zeros([len(lst)]),
-            "accent_labels": np.asarray(accent_labels)}
-
-
-# For CTC and Accent
-def generator_ctc_accent(lst, feats, batch_size,
-                         max_label_len,
-                         max_input_len,
-                         encoder_len,
-                         accent_classes,
-                        trans_ids,
-                        accent_dct,
-                        accent_ids
-                         ):
-    n_batchs = len(lst) // batch_size
-    while True:
-        random.shuffle(lst)
-        for i in range(n_batchs):
-            begin = i * batch_size
-            end = begin + batch_size
-            subs = lst[begin:end]
-            data, labels = load_ctc_accent(subs, feats,
-                                           max_label_len,
-                                           max_input_len,
-                                           encoder_len,
-                                           accent_classes,
-                                           trans_ids,
-                                           accent_dct,
-                                           accent_ids )
-            yield data, labels
-
-
 # For CTC
 def load_ctc(lst, feats,
             max_label_len,
@@ -294,35 +236,51 @@ def generator_ctc(lst, feats, batch_size,
 
 
 
-# For transformer
-def load_tfr(lst, feats,
-            max_label_len,
-            max_input_len,
-            bpe_classes,
-            trans_ids):
-    encoder_inputs = []
-    decoder_inputs = []
-    outputs = []
+
+
+
+# For CTC and Accent
+def load_ctc_accent(lst, feats,
+                    max_label_len,
+                    max_input_len,
+                    encoder_len,
+                    accent_classes,
+                    trans_ids,
+                    accent_dct,
+                    accent_ids, ):
+    inputs1 = []
+    ctc_input_len = []
+    ctc_label_len = []
+    ctc_labels = []
+    accent_labels = []
     for utt in lst:
         utt = utt_norm(utt)
-        label = trans_ids[utt]
-        label_norm = text_ids_norm(label, max_label_len)
-        label_norm2 = text_ids_norm2(label, max_label_len)
-        label_norm_oh = to_categorical(label_norm,bpe_classes)
-        encoder_inputs.append(feat_reshape(feat_norm(feats[utt]),max_input_len))
-        decoder_inputs.append(label_norm2)
-        outputs.append(label_norm_oh)
-    return {"encoder_input": np.float32(np.asarray(encoder_inputs)),
-            "decoder_input": np.float32(np.asarray(decoder_inputs))}, \
-           {"output": np.float32(np.asarray(outputs))}
+        ctc_label = trans_ids[utt]
+        ctc_label_norm = text_ids_norm(ctc_label, max_label_len)
+        inputs1.append(feat_reshape(feat_norm(feats[utt]),max_input_len))
+        ctc_input_len.append(encoder_len)
+        ctc_label_len.append(min(len(ctc_label)-1,max_label_len) )
+        ctc_labels.append(ctc_label_norm)
+        accent_labels.append(to_categorical(accent_ids[accent_dct[utt]], num_classes=accent_classes))
+    return {"inputs": np.float32(np.expand_dims(np.asarray(inputs1), axis=3)),
+            "ctc_input_len": np.int32(np.expand_dims(np.asarray(ctc_input_len), axis=1)),
+            "ctc_label_len": np.int32(np.expand_dims(np.asarray(ctc_label_len), axis=1)),
+            "ctc_labels": np.float32(np.asarray(ctc_labels))}, \
+           {"ctc_loss": np.zeros([len(lst)]),
+            "accent_labels": np.asarray(accent_labels)}
 
 
-def generator_tfr(lst, feats, batch_size,
-                  max_label_len,
-                  max_input_len,
-                  bpe_classes,
-                  trans_ids
-                  ):
+
+
+def generator_ctc_accent(lst, feats, batch_size,
+                         max_label_len,
+                         max_input_len,
+                         encoder_len,
+                         accent_classes,
+                        trans_ids,
+                        accent_dct,
+                        accent_ids
+                         ):
     n_batchs = len(lst) // batch_size
     while True:
         random.shuffle(lst)
@@ -330,16 +288,79 @@ def generator_tfr(lst, feats, batch_size,
             begin = i * batch_size
             end = begin + batch_size
             subs = lst[begin:end]
-            data, labels = load_tfr(subs, feats,
-                                    max_label_len,
-                                    max_input_len,
-                                    bpe_classes,
-                                    trans_ids)
+            data, labels = load_ctc_accent(subs, feats,
+                                           max_label_len,
+                                           max_input_len,
+                                           encoder_len,
+                                           accent_classes,
+                                           trans_ids,
+                                           accent_dct,
+                                           accent_ids )
             yield data, labels
 
 
+# For CTC Accent Sex
+def load_ctc_accent_sex(lst, feats,
+                    max_label_len,
+                    max_input_len,
+                    encoder_len,
+                    accent_classes,
+                    trans_ids,
+                    accent_dct,
+                    accent_ids, ):
+    inputs1 = []
+    ctc_input_len = []
+    ctc_label_len = []
+    ctc_labels = []
+    accent_labels = []
+    sex_labels = []
+    for utt in lst:
+        utt = utt_norm(utt)
+        ctc_label = trans_ids[utt]
+        ctc_label_norm = text_ids_norm(ctc_label, max_label_len)
+        inputs1.append(feat_reshape(feat_norm(feats[utt]),max_input_len))
+        ctc_input_len.append(encoder_len)
+        ctc_label_len.append(min(len(ctc_label)-1,max_label_len) )
+        ctc_labels.append(ctc_label_norm)
+        accent_labels.append(to_categorical(accent_ids[accent_dct[utt]], num_classes=accent_classes))
+        sex_labels.append(AESRC_SEX2INT[AESRC_SEX[utt]])
+    return {"inputs": np.float32(np.expand_dims(np.asarray(inputs1), axis=3)),
+            "ctc_input_len": np.int32(np.expand_dims(np.asarray(ctc_input_len), axis=1)),
+            "ctc_label_len": np.int32(np.expand_dims(np.asarray(ctc_label_len), axis=1)),
+            "ctc_labels": np.float32(np.asarray(ctc_labels))}, \
+           {"ctc_loss": np.zeros([len(lst)]),
+            "accent_labels": np.asarray(accent_labels),
+            "sex_labels": np.asarray(sex_labels)}
 
-# pred
+
+def generator_ctc_accent_sex(lst, feats, batch_size,
+                         max_label_len,
+                         max_input_len,
+                         encoder_len,
+                         accent_classes,
+                        trans_ids,
+                        accent_dct,
+                        accent_ids
+                         ):
+    n_batchs = len(lst) // batch_size
+    while True:
+        random.shuffle(lst)
+        for i in range(n_batchs):
+            begin = i * batch_size
+            end = begin + batch_size
+            subs = lst[begin:end]
+            data, labels = load_ctc_accent_sex(subs, feats,
+                                           max_label_len,
+                                           max_input_len,
+                                           encoder_len,
+                                           accent_classes,
+                                           trans_ids,
+                                           accent_dct,
+                                           accent_ids )
+            yield data, labels
+
+
+# For Predict
 def feats2inputs(feats,max_input_len):
     utts = []
     arr = []
@@ -385,7 +406,7 @@ def ctc_eval(labels, label_lens, preds, show=None):
         print("DEMO-HYP", pred, pred_)
     return wer_/count
 
-def softmax2res(ref,hyp,show=True):
+def softmax2pred(ref, hyp, show=True):
     refs = np.argmax(ref, axis=2)
     hyps = np.argmax(hyp, axis=2)
     wer_,count = 0,0
@@ -400,7 +421,7 @@ def softmax2res(ref,hyp,show=True):
         print("DEMO-HYP", hyp, hyp_)
     return wer_/count
 
-def acc(ref,hyp,accent=-1):
+def accent_acc(ref, hyp, accent=-1):
     ref = np.argmax(ref, axis=1)
     hyp = np.argmax(hyp, axis=1)
     if accent>-1:
@@ -408,6 +429,11 @@ def acc(ref,hyp,accent=-1):
         return sum(ref[ids] == hyp[ids])/len(ids)
     else:
         return sum(ref==hyp)/len(ref)
+
+def sex_acc(ref, hyp):
+    hyp = np.squeeze(hyp)
+    hyp = np.where(hyp>=0.5,1.0,0.0)
+    return sum(ref==hyp)/len(hyp)
 
 """
 ================= 
@@ -417,6 +443,8 @@ def acc(ref,hyp,accent=-1):
 # print("------------ loading predefination ---------------------")
 # AESRC_ACCENT = scp2dct(read_lines("src/AESRC2020/NATION.TXT"))
 # AESRC_ACCENT2INT = {"Chinese":0, "Japanese":1, "Indian":2, "Korean":3, "American":4, "British":5, "Portuguese":6, "Russian":7}
+AESRC_SEX = scp2dct(read_lines("/disc1/AESRC2020/src/AESRC2020/GENDER.TXT"))
+AESRC_SEX2INT = {"M":0,"F":1}
 # AESRC_TRANS = filt_text_dct(scp2dct(read_lines("/disc1/AESRC2020/data/aesrc_fbank/trans.scp")))
 # AESRC_TRANS_IDS = text_dct_ids_with_eos(BPE_EN, AESRC_TRANS)
 # AESRC_UTT2FRAMES = scp2dct(read_lines("/disc1/AESRC2020/data/aesrc_fbank_sp/utt2num_frames"))
@@ -450,7 +478,7 @@ if __name__ == "__main__":
     AESRC_FEATS = kaldiio.load_scp(aesrc_scp_file)
     LIBRI_FEATS = kaldiio.load_scp(libri_scp_file)
 
-    generator = generator_ctc_accent(aesrc_lst, AESRC_FEATS, 32,
+    generator = generator_ctc_accent_sex(aesrc_lst, AESRC_FEATS, 32,
                                      max_input_len=1200,
                                      max_label_len=72,
                                      encoder_len=114,
@@ -460,5 +488,7 @@ if __name__ == "__main__":
                                      accent_ids=AESRC_ACCENT2INT)
 
     data = next(generator)
+    acc = sex_acc(data[1]['sex_labels'], data[1]['sex_labels'])
+    print(acc)
 
     exit()
