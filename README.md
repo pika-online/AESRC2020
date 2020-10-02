@@ -94,7 +94,7 @@ Accent Acc (dev):
  
 | |  Chinese|Japanese  |India| Korea | American | Britain | Portuguese| Russia| Overall
 |----|----|----|----|----|----|----|----|----|----|
-| resnet18 + bi-gru|  0.56| 0.70 |0.96|0.67|0.49|0.88|0.79|0.71|**0.72**
+| resnet18 + bi-gru|  0.64| 0.69 |0.97|0.66|0.58|0.92|0.82|0.70|**0.75**
 
 
 
