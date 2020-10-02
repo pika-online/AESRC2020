@@ -45,8 +45,8 @@ def train():
             if batch%300==0:
                 with tf.device("/cpu:0"):
                     accent_pred = model.predict(dev_data[0])[1]
-                    acc = us.accent_acc(dev_data[1]['accent_labels'], accent_pred)
-                    print("   iter:%03d dev accent_acc:"%batch,acc)
+                    accent_acc = us.accent_acc(dev_data[1]['accent_labels'], accent_pred)
+                    print("   iter:%03d dev accent_acc:"%batch,accent_acc)
 
     EVL = evaluation()
     #
