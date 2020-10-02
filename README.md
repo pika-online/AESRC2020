@@ -86,7 +86,7 @@ CTC WER (no lm):
 
 |  |dev  | test| 
 |----|----|----|
-|  resnet18 + bi-gru| 29% |-|-|-|
+|  resnet18 + bi-gru| 24% |-|-|-|
 
 
  
