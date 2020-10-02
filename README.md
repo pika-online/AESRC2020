@@ -59,7 +59,7 @@ EPOCHS| INIT_LR  | BPE_SIZE |
 |----|----|----|
 |  1200| 72 |114|
 
-Training_tricks: ReduceLROnPlateau, EarlyStopping
+Training_tricks: ReduceLROnPlateau, EarlyStopping (libri_monitor:dev_loss, aesrc_monitor: dev_acc)
 
 ###### 4.2 pre-training : Initialize the hidden layer (librispeech)
  The red outline represents the initialized weights by librispeech-ctc-training
