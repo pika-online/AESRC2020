@@ -10,18 +10,20 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 def train():
 
-    model = mdl.model_res_gru_ctc_accent( shapes=(MAX_INPUT_LEN, FEAT_DIM, 1),
-                                        accent_classes=ACCENT_CLASSES,
-                                          bpe_classes=BPE_CLASSES,
-                                          max_label_len=MAX_LABEL_LEN,
-                                          cnn=CNN,
-                                          raw_model=RAW_MODEL)
+    model = mdl.model_res_gru_ctc_accent_sex(shapes=(MAX_INPUT_LEN, FEAT_DIM, 1),
+                                             accent_classes=ACCENT_CLASSES,
+                                             bpe_classes=BPE_CLASSES,
+                                             max_label_len=MAX_LABEL_LEN,
+                                             cnn=CNN,
+                                             raw_model=RAW_MODEL)
 
 
 
     parallel_model = mdl.compile(model,gpus=4,lr=0.0005,
-                                 loss=[lambda y_true, y_pred: y_pred,"categorical_crossentropy"],
-                                 loss_weights=[0.4,0.6],
+                                 loss={"ctc_loss": lambda y_true, y_pred: y_pred,
+                                       "accent_labels": "categorical_crossentropy"},
+                                 loss_weights={"ctc_loss": 0.4,
+                                               "accent_labels": 0.6},
                                  metrics={"accent_labels": 'accuracy'})
 
     with tf.device("/cpu:0"):
@@ -43,8 +45,8 @@ def train():
             if batch%300==0:
                 with tf.device("/cpu:0"):
                     accent_pred = model.predict(dev_data[0])[1]
-                    acc = us.acc(dev_data[1]['accent_labels'], accent_pred)
-                    print("   iter:%03d dev acc:"%batch,acc)
+                    acc = us.accent_acc(dev_data[1]['accent_labels'], accent_pred)
+                    print("   iter:%03d dev accent_acc:"%batch,acc)
 
     EVL = evaluation()
     #
@@ -61,15 +63,15 @@ if __name__ == "__main__":
     MAX_LABEL_LEN = 72
     ENCODER_LEN = 114
     BATCH_SIZE = 128
-    INIT_EPOCH = 2
+    INIT_EPOCH = 3
     FEAT_DIM = 80
     BPE_CLASSES = 1000
     ACCENT_CLASSES = 8
     EPOCHS = 20
     CNN = 'res18'
-    RAW_MODEL = '/disc1/ARNet/exp/aesrc/res18_gru/001.h5'
-    LOG_FILE = '/disc1/ARNet/exp/aesrc/res18_gru/model.csv'
-    MODEL_DIR = '/disc1/ARNet/exp/aesrc/res18_gru/'
+    RAW_MODEL = '/disc1/ARNet/exp/aesrc/res18_gru2/002.h5'
+    LOG_FILE = '/disc1/ARNet/exp/aesrc/res18_gru2/model.csv'
+    MODEL_DIR = '/disc1/ARNet/exp/aesrc/res18_gru2/'
 
     # file
     train_file = "/disc1/AESRC2020/data/aesrc_fbank_sp/train.scp"
