@@ -1,113 +1,126 @@
-
-## AR-Net: Accent Recognition Network (Keras)
-For Interspeech2020 Accented English Speech Recognition Challenges 
-
-##### Author: Ephemeroptera
-##### Blog: https://blog.csdn.net/Ephemeroptera/article/details/108680076
-##### Date: 2020-09-25
-##### Keywords: e2e, resnet, multi-task-learning
-
-##### 1. Introduction
-Accent recognition is closely related to speech recognition, It is easy to fall into the overfitting situation if we only do simple accent classification,
-hence we introduce speech recognition task to build a multi-task model.
-
-##### 2. Architecture
-
-We adopt CNN + RNN encoding framework and ASR/AR multi-task outputs:
-![avatar](https://img-blog.csdnimg.cn/20200930124456515.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_center)
-
-The above model can be summarized as follow:
-    
-    <INPUTS>: [N,MAX_TIME,80,1] # 80-dim fbank features from kaldi-tools (+ CMN)
-    <ENCODER> resnet(Generating internal features and Pooling) + RNN(seq2seq model)
-    <OUTPUTS:CTC> for e2e-ASR (ctc loss)
-    <OUTPUTS:ACCENT> for accent classification (CE)
-    
-##### 3. Speech Data
-###### 3.1 Aesrc data: 160 hours Accented English Data 
-The DataTang will provide participants with a total of 160 hours of English data collected from eight countries:
-    
-    Russian, 
-    Korean, 
-    American, 
-    Portuguese, 
-    Japanese, 
-    Indian, 
-    British 
-    Chinese  
-with about 20 hours of data for each accent
-###### 3.2 Auxiliary Data: 1000hours Librispeech corpus
-Librispeech data consists of 960 hours of training data and 40 hours of test data, you can obtain from: http://www.openslr.org/12/
+import local.utils as us
+import local.model as mdl
+import os
+import random
+import tensorflow as tf
+from keras.callbacks import ReduceLROnPlateau, CSVLogger, EarlyStopping, Callback,ModelCheckpoint,LearningRateScheduler
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 
 
-##### 4. Training Method
+def train():
 
-###### 4.1 training/network config
-
-EPOCHS| INIT_LR  | BPE_SIZE |
-|----|----|----|
-20|0.001|1000|
-
-
-| MAX_SEQ_LEN (libri) | MAX_LABEL_LEN (libri) | ENCODER_LEN (libri) |
-|----|----|----|
-|1600 | 100 |150 |
-
-
-|  MAX_SEQ_LEN (aesrc)| MAX_LABEL_LEN (aesrc)  | ENCODER_LEN (aesrc) |
-|----|----|----|
-|  1200| 72 |114|
-
-Training_tricks: ReduceLROnPlateau, EarlyStopping (libri_monitor:dev_loss, aesrc_monitor: dev_acc)
-
-###### 4.2 pre-training : Initialize the hidden layer (librispeech)
- The red outline represents the initialized weights by librispeech-ctc-training
-![avatar](https://img-blog.csdnimg.cn/20200930124919696.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0VwaGVtZXJvcHRlcmE=,size_16,color_FFFFFF,t_70#pic_cente)
-
-###### 4.3 training ARNet
-
-
-##### 5. Results
-###### 5.1 librispeech
-CTC WER (no lm):
-
-|  |dev_clean | dev_other | test_clean | test_other |
-|----|----|----|----|----|
-| resnet18 + bi-gru| 20.7% |37.5%|20.9%|38.6%|
-
-**Experiments have shown that using a deeper resnet can further reduce word error rates,
-such as: resnet34 brought 16.7% wer in dev_clean**
+    model = mdl.model_res_gru_ctc_accent_sex(shapes=(MAX_INPUT_LEN, FEAT_DIM, 1),
+                                             accent_classes=ACCENT_CLASSES,
+                                             bpe_classes=BPE_CLASSES,
+                                             max_label_len=MAX_LABEL_LEN,
+                                             cnn=CNN,
+                                             raw_model=RAW_MODEL)
 
 
 
-###### 5.2 aesrc
-CTC WER (no lm):
+    parallel_model = mdl.compile(model,gpus=4,lr=0.0005,
+                                 loss={"ctc_loss": lambda y_true, y_pred: y_pred,
+                                       "accent_labels": "categorical_crossentropy"},
+                                 loss_weights={"ctc_loss": 0.4,
+                                               "accent_labels": 0.6},
+                                 metrics={"accent_labels": 'accuracy'})
 
-|  |dev  | test| 
-|----|----|----|
-|  resnet18 + bi-gru| 24% |-|-|-|
+    with tf.device("/cpu:0"):
+        ctc_decode_model = mdl.sub_model(model, 'inputs', 'ctc_pred')
+
+    class evaluation(Callback):
+        def on_epoch_end(self, epoch, logs=None):
+            with tf.device("/cpu:0"):
+                print("============== SAVING =============")
+                model.save_weights("%s/%03d.h5" % (MODEL_DIR, epoch))
+
+                print("============ CTC EVAL ==========")
+                ctc_pred = mdl.ctc_pred(ctc_decode_model, dev_data[0], input_len=ENCODER_LEN,
+                                        batch_size=BATCH_SIZE)
+                print("DEV-WER:", us.ctc_eval(dev_data[0]["ctc_labels"],
+                                              dev_data[0]["ctc_label_len"], ctc_pred, True))
+
+        def on_batch_begin(self, batch, logs=None):
+            if batch%300==0:
+                with tf.device("/cpu:0"):
+                    accent_pred = model.predict(dev_data[0])[1]
+                    acc = us.accent_acc(dev_data[1]['accent_labels'], accent_pred)
+                    print("   iter:%03d dev accent_acc:"%batch,acc)
+
+    EVL = evaluation()
+    #
+    parallel_model.fit_generator(generator=generator, steps_per_epoch=N_BATCHS, epochs=EPOCHS,
+                                 callbacks=[ early_stopper,lr_reducer,csv_logger, EVL], initial_epoch=INIT_EPOCH,
+                                 validation_data=(dev_data[0], dev_data[1]), validation_steps=N_BATCHS)
 
 
- 
-Accent Acc (dev):
- 
-| |  Chinese|Japanese  |India| Korea | American | Britain | Portuguese| Russia| Overall
-|----|----|----|----|----|----|----|----|----|----|
-| resnet18 + bi-gru|  0.64| 0.69 |0.97|0.66|0.58|0.92|0.82|0.70|**0.75**
+
+if __name__ == "__main__":
+
+    # base
+    MAX_INPUT_LEN = 1200
+    MAX_LABEL_LEN = 72
+    ENCODER_LEN = 114
+    BATCH_SIZE = 128
+    INIT_EPOCH = 3
+    FEAT_DIM = 80
+    BPE_CLASSES = 1000
+    ACCENT_CLASSES = 8
+    EPOCHS = 20
+    CNN = 'res18'
+    RAW_MODEL = '/disc1/ARNet/exp/aesrc/res18_gru2/002.h5'
+    LOG_FILE = '/disc1/ARNet/exp/aesrc/res18_gru2/model.csv'
+    MODEL_DIR = '/disc1/ARNet/exp/aesrc/res18_gru2/'
+
+    # file
+    train_file = "/disc1/AESRC2020/data/aesrc_fbank_sp/train.scp"
+    dev_file = "/disc1/AESRC2020/data/aesrc_fbank_sp/dev.scp"
+
+    # feats
+    FEATS = us.kaldiio.load_scp(train_file)
+    FEATS_DEV = us.kaldiio.load_scp(dev_file)
+
+    # list
+    train_lst = us.limit_time_utts(us.limit_trans_utts(us.scp2key(us.read_lines(train_file)),
+                                    us.AESRC_TRANS_IDS, MAX_LABEL_LEN), us.AESRC_UTT2FRAMES, MAX_INPUT_LEN)
+    dev_lst = us.scp2key(us.read_lines(dev_file))
+    dev_lst = random.sample(dev_lst, 1000)
+    N_BATCHS = len(train_lst) // BATCH_SIZE
 
 
-
-###### 5.3 Official Baseline
-Officials have also provided a good baseline: https://github.com/R1ckShi/AESRC2020, That method is based on ESPNET, and the model consists of Transformer and ASR-init.
-
-Accent acc (dev):
-
-|  Chinese|Japanese  |India| Korea | American | Britain | Portuguese| Russia| Overall
-|----|----|----|----|----|----|----|----|----|
-|  0.67| 0.73 |0.97|0.56|0.60|0.94|0.86|0.76|0.76
-
-
+    # callbacks
+    lr_reducer = ReduceLROnPlateau(factor=0.5, cooldown=0, patience=0, min_lr=0.5e-6,
+                                   monitor='accent_labels_acc',mode='max',min_delta=0.5,verbose=1)
+    early_stopper = EarlyStopping( patience=3,
+                                   monitor='accent_labels_acc',mode='max',min_delta=0.1,verbose=1)
+    csv_logger = CSVLogger(LOG_FILE)
+    # checkpointer = ModelCheckpoint(filepath=MODEL_FILE, verbose=1, save_best_only=True, monitor='val_loss',
+    #                                save_weights_only=True)
+    # lrs = LearningRateScheduler(learn_rate,verbose=1)
 
 
-Welcome to fork and star ~
+    # generator
+    generator = us.generator_ctc_accent(train_lst, FEATS, BATCH_SIZE,
+                                 encoder_len=ENCODER_LEN,
+                                 max_input_len=MAX_INPUT_LEN,
+                                 max_label_len=MAX_LABEL_LEN,
+                                 trans_ids=us.AESRC_TRANS_IDS,
+                                 accent_classes=ACCENT_CLASSES,
+                                 accent_dct=us.AESRC_ACCENT,
+                                 accent_ids=us.AESRC_ACCENT2INT)
+
+    dev_data = us.load_ctc_accent(dev_lst, FEATS_DEV,
+                           encoder_len=ENCODER_LEN,
+                           max_input_len=MAX_INPUT_LEN,
+                           max_label_len=MAX_LABEL_LEN,
+                           trans_ids=us.AESRC_TRANS_IDS,
+                           accent_classes=ACCENT_CLASSES,
+                           accent_dct=us.AESRC_ACCENT,
+                           accent_ids=us.AESRC_ACCENT2INT)
+
+
+    train()
+    exit()
+
+
