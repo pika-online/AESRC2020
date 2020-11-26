@@ -20,13 +20,13 @@ CHANNEL_AXIS = 3
 """
 
 def _bn_relu(input):
-    """Helper to build a BN -> relu block
+    """Helper to ctc_model a BN -> relu block
     """
     norm = BatchNormalization(axis=CHANNEL_AXIS)(input)
     return Activation("relu")(norm)
 
 def _conv_bn_relu(**conv_params):
-    """Helper to build a conv -> BN -> relu block
+    """Helper to ctc_model a conv -> BN -> relu block
     """
     filters = conv_params["filters"]
     kernel_size = conv_params["kernel_size"]
@@ -45,7 +45,7 @@ def _conv_bn_relu(**conv_params):
     return f
 
 def _bn_relu_conv(**conv_params):
-    """Helper to build a BN -> relu -> conv block.
+    """Helper to ctc_model a BN -> relu -> conv block.
     This is an improved scheme proposed in http://arxiv.org/pdf/1603.05027v2.pdf
     """
     filters = conv_params["filters"]
@@ -167,12 +167,11 @@ def _get_block(identifier):
 ==================================
 """
 
-def resnet18_(input_shape):
-    block_fn = _get_block(basic_block)
-    filters = 64
 
-    input = Input(shape=input_shape)
-    x = _conv_bn_relu(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)
+def resnet18_(input,filters=64):
+    block_fn = _get_block(basic_block)
+
+    x = _conv_bn_relu(filters=filters, kernel_size=(7, 7), strides=(2, 2))(input)
     x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(x)
     for i, r in enumerate([2, 2, 2, 2]):
         x = _residual_block(block_fn, filters=filters, repetitions=r, is_first_layer=(i == 0))(x)
@@ -181,14 +180,15 @@ def resnet18_(input_shape):
     # block_shape = K.int_shape(x)
     # x = AveragePooling2D(pool_size=(block_shape[ROW_AXIS], block_shape[COL_AXIS]), strides=(1, 1))(x)
     # x = Flatten()(x)
-    return Model(input, x, name='resnet18')
+    return x
 
 
-def resnet34_(input_shape):
+
+
+
+def resnet34_(input,filters=64):
     block_fn = _get_block(basic_block)
-    filters = 64
 
-    input = Input(shape=input_shape)
     x = _conv_bn_relu(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)
     x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(x)
     for i, r in enumerate([3, 4, 6, 3]):
@@ -199,14 +199,12 @@ def resnet34_(input_shape):
     # x = AveragePooling2D(pool_size=(block_shape[ROW_AXIS], block_shape[COL_AXIS]),strides=(1, 1))(x)
     # x = Flatten()(x)
 
-    return Model(input,x,name='resnet34')
+    return x
 
 
-def resnet50_(input_shape):
+def resnet50_(input,filters=64):
     block_fn = _get_block(bottleneck)
-    filters = 64
 
-    input = Input(shape=input_shape)
     x = _conv_bn_relu(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)
     x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(x)
     for i, r in enumerate([3, 4, 6, 3]):
@@ -220,11 +218,9 @@ def resnet50_(input_shape):
     return Model(input,x,name='resnet50')
 
 
-def resnet101_(input_shape):
+def resnet101_(input,filters=64):
     block_fn = _get_block(bottleneck)
-    filters = 64
 
-    input = Input(shape=input_shape)
     x = _conv_bn_relu(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)
     x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(x)
     for i, r in enumerate([3, 4, 23, 3]):
@@ -238,11 +234,9 @@ def resnet101_(input_shape):
     return Model(input,x,name='resnet101')
 
 
-def resnet152_(input_shape):
+def resnet152_(input,filters=64):
     block_fn = _get_block(bottleneck)
-    filters = 64
 
-    input = Input(shape=input_shape)
     x = _conv_bn_relu(filters=64, kernel_size=(7, 7), strides=(2, 2))(input)
     x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding="same")(x)
     for i, r in enumerate([3, 8, 36, 3]):
