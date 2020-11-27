@@ -60,7 +60,7 @@ The DataTang will provide participants with a total of 160 hours of English data
     Portuguese (PT)
     Russian (RU)
 		
-with about 20 hours of data for each accent, the detailed distribution about utterance and speakers (U/S) per accent was:
+with about 20 hours of data for each accent, the detailed distribution about utterances and speakers (U/S) per accent was:
 ![avatar](img/dataset.jpg)
 
 ##### 4. Results
