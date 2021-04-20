@@ -35,18 +35,6 @@ Specially, in our code, the detailed configurations and options were:
     <Feature Integration>: (1) Avg-Pooling (2) Bi-GRU (3) NetVLAD (4) GhostVLAD
     <Discriminative Losses>: (1) Softmax (2) SphereFace (3) CosFace (4) ArcFace (5) Circle-Loss
 
-You can acquire our proposed network  in "local/model.py", also you can view training code in "train_aesrc.py" and exectue it:
-
-    Usage: 
-        python train_aesrc.py <CNNs> <ASR_EN> <Integration> <Disc Loss> <Margin> <BN> <Init>,
-    Note:
-        <CNNs>: res18, res34, res50, res101, res152,
-        <ASR_EN>: enable ASR branch (>0),
-        <Integration>: avg, bigru, attention, vlad, gvlad,
-        <Disc Loss>: softmax, sphereface, cosface, arcface, circleloss,
-        <Margin>: the margin for loss,
-        <BN>: visual accent  bottleneck feature (>0)
-        <init>: initial model
     
 ##### 3. Accented Speech Data
 The DataTang will provide participants with a total of 160 hours of English data collected from eight countries:
