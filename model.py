@@ -46,30 +46,11 @@ def BIGRU(hidden,seq=True,rgr=l2(1e-4),name=None):
                                   return_sequences=seq,
                                   kernel_regularizer=rgr,
                                   bias_regularizer=rgr),
-                                  merge_mode='sum',
+                                  merge_mode='concat',
                                   name=name)
-
-def cnn2seq(cnn_tensor):
-    _, h, w, c = K.int_shape(cnn_tensor)
-    encoder_len = int(h * w)
-    print("==== the encoder length is: %d ====" % encoder_len)
-    print("==== Warnning: you should let max_label_len <= encoder_len ====")
-    return K.reshape(cnn_tensor,[-1,encoder_len,c])
-
-def CNN2SEQ(name=None):
-    return Lambda(function=cnn2seq,name=name)
 
 def DP(rate,name=None):
     return Dropout(rate,name=name)
-
-
-def BN_RELU(x):
-    x = BN()(x)
-    return Activation('relu')(x)
-
-def LN_RELU(x):
-    x = LN()(x)
-    return Activation('relu')(x)
 
 
 """
@@ -213,7 +194,7 @@ def compile(model,
         model_ = multi_gpu_model(model, gpus=gpus)
     else:
         model_ = model
-    model_.compile(optimizer=Adam(lr),
+    model_.compile(optimizer=Adam(lr,decay=2e-4),
                            loss=loss,
                            loss_weights=loss_weights,
                            metrics=metrics)
@@ -269,10 +250,10 @@ def SAR_Net(input_shape,
     else:
         print("======= ERROR: please specify cnn in res-[18,34,50,101,152] ======")
     cnn = Reshape([-1,K.int_shape(cnn)[-1]],name="CNN2SEQ")(cnn)
-    # cnn = CNN2SEQ(name="CNN2SEQ")(cnn)
-    cnn = DS(hidden_dim, activation=None, name="CNN_DS")(cnn)
-    cnn = LN(name="CNN_DS_LN")(cnn)
-    crnn = BIGRU(hidden_dim, name="CNN_BIGRU")(cnn)
+    cnn = DS(hidden_dim, activation='tanh', name="CNN_LIN")(cnn)
+    cnn = LN(name="CNN_LIN_LN")(cnn)
+    crnn = BIGRU(hidden_dim, name="CRNN")(cnn)
+    crnn = LN(name="CRNN_LN")(crnn)
 
     # =========================
     #         ASR Branch
@@ -295,9 +276,9 @@ def SAR_Net(input_shape,
         # =========================
         #   AR Branch: Integration
         # =========================
-        # ar = DS(hidden_dim,activation='tanh',name='AR_DS')(crnn)
-        # ar = LN(name='AR_DS_LN')(ar)
-        ar = integration(crnn,
+        ar = DS(hidden_dim,activation='tanh',name='AR_DS')(crnn)
+        ar = LN(name='AR_DS_LN')(ar)
+        ar = integration(ar,
                          hidden_dim=hidden_dim,
                          mto=mto,
                          vlad_clusters=vlad_clusters,
@@ -386,7 +367,7 @@ def SAR_Net(input_shape,
         metrics['y_disc_bn'] = 'accuracy'
 
     train_model = compile(model,gpus,lr=lr,loss=loss,loss_weights=loss_weights,metrics=metrics)
-
+    print(loss_weights)
     return model,train_model
 
 
