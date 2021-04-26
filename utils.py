@@ -2,7 +2,8 @@ import pickle
 from random import shuffle, randrange
 from keras.utils.np_utils import to_categorical
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler as MMS
+from sklearn.preprocessing import MinMaxScaler
+MMS = MinMaxScaler()
 
 """
 ==========================
@@ -32,7 +33,7 @@ def read_lines(path):
 ==========================
 """
 def feat_norm(feat):
-   return feat-np.mean(feat,axis=1,keepdims=True)
+   return MMS.fit_transform(feat)
 
 
 def feat_reshape(feat, max_len=1200):
@@ -57,7 +58,7 @@ def text_ids_norm(ids,max_len):
     if len(ids)>max_len:
         ids = ids[:max_len]
     n = min(len(ids), max_len)
-    tmp = [UNK_ID] * max_len
+    tmp = [EOS_ID] * max_len
     tmp[:n] = ids
     return tmp
 
@@ -152,6 +153,13 @@ def data_generator(lst,
                                        )
             yield input,output
 
+def cal_descriptors(T,D):
+    def pool(x):
+        return np.ceil(x/2)
+    return int(pool(pool(pool(pool(pool(T)))))*pool(pool(pool(pool(pool(D))))))
+
+
+
 if __name__ == "__main__":
     lst = read_lines("dev.lst")
     data_dct = load("array/data_scp.pkl")
@@ -182,4 +190,8 @@ if __name__ == "__main__":
                                 encoder_len=100,
                                 accent_classes=8,)
     data = next(generator)
+    print(cal_descriptors(1200,80))
+    import matplotlib.pyplot as plt
+    plt.imshow(data[0]['x_data'][0])
+    plt.waitforbuttonpress(0)
     exit()
