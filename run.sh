@@ -2,7 +2,7 @@ set -e
 
 
 ##############################
-#		(1) Data Prep (SCP)
+#	(1) Data Prep (SCP)
 ##############################
 ## (i) audio list and scp
 src=E:/AESRC2020/speech
