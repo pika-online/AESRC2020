@@ -112,7 +112,7 @@ def vlad(x,
 
 """
 =========================
-        AR Moudle
+        AR Module
 =========================
 """
 def integration(x,
