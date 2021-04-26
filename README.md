@@ -25,9 +25,11 @@ achieves the best discriminative optimization for accent representation.
 
 
 ##### 2. Environment
-cudatoolkit==10.0
-tensorlfow-gpu==1.13.1
-keras==2.3.1
+    conda install cudatoolkit=10.0
+    conda install cudnn=7.6.5
+    conda install tensorlfow-gpu=1.13.1
+    conda install keras
+    pip install keras_layer_normalization
 
 ##### 3. Framework
 We adopt CRNNs based front-end encoder, CTC based ASR branch, AR branch which has packaged feature-integration, discriminative losses and softmax based classifier:
