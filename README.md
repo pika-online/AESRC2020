@@ -1,4 +1,3 @@
-
 ## SAR-Net: Speech Accent Recognition Network (Keras)
 For Interspeech2020 Accented English Speech Recognition Challenges 2020 (AESRC2020)
 
@@ -8,7 +7,7 @@ For Interspeech2020 Accented English Speech Recognition Challenges 2020 (AESRC20
 ##### Keywords: e2e, resnet, crnns, bigru, netvlad, cosface, arcface, circle-loss
 
 ##### 1. Abstract
-This paper proposes a end-to-end deep network to recognize kinds of accents under the same language, where we develop
+This paper proposes an end-to-end deep network to recognize kinds of accents under the same language, where we develop
 and transfer the deep architecture in speaker-recognition area to accent classification task for learning utterance-level accent
 representation. Compared with the individual-level feature in speaker-recognition, accent recognition throws a more challenging
 issue in acquiring compact group-level features for the speakers with the same accent, hence a good discriminative accent feature
@@ -24,8 +23,13 @@ achieves the best discriminative optimization for accent representation.
 
 (you can view the baseline code proposed by AESRC2020: https://github.com/R1ckShi/AESRC2020)
 
-##### 2. Framework
 
+##### 2. Environment
+cudatoolkit==10.0
+tensorlfow-gpu==1.13.1
+keras==2.3.1
+
+##### 3. Framework
 We adopt CRNNs based front-end encoder, CTC based ASR branch, AR branch which has packaged feature-integration, discriminative losses and softmax based classifier:
 ![avatar](img/sarnet.jpg)
 
@@ -36,7 +40,7 @@ Specially, in our code, the detailed configurations and options were:
     <Discriminative Losses>: (1) Softmax (2) SphereFace (3) CosFace (4) ArcFace (5) Circle-Loss
 
     
-##### 3. Accented Speech Data
+##### 4. Accented Speech Data
 The DataTang will provide participants with a total of 160 hours of English data collected from eight countries:
     	
     Chinese (CHN)
@@ -51,15 +55,15 @@ The DataTang will provide participants with a total of 160 hours of English data
 with about 20 hours of data for each accent, the detailed distribution about utterances and speakers (U/S) per accent was:
 ![avatar](img/dataset.jpg)
 
-##### 4. Results
-###### 4.1 Accent Recognition
+##### 5. Results
+###### 5.1 Accent Recognition
 The experimental results are divided into two parts according to whether the ASR pretraining task is used to initialize the encoder, then we conpare different integration methods and discriminative losses. Obviously, circle-loss possess the best discriminative optimization
 ![avatar](img/result1.png)
 
 Here, under the circle-loss, we gave the detailed accuracy for each accent:
 ![avatar](img/result2.png)
 
-###### 4.2 Visual embedding Accent Feature
+###### 5.2 Visual embedding Accent Feature
 In order to better demonstrate the discriminative optimization effect of different loss on accent features, we compress accent features into 2D/3D feature space.
 The first row and the second row represented the accent features on the train-set and dev-set respectively.
 
