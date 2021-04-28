@@ -76,7 +76,7 @@ The first row and the second row represented the accent features on the train-se
 (2) ArcFace (2D)
 ![avatar](img/arcface.png)
 
-(2) Softmax, CosFace, ArcFace, Circle-Loss (3D)
+(3) Softmax, CosFace, ArcFace, Circle-Loss (3D)
 ![avatar](img/overall.png)
 
 Welcome to fork and star ~
